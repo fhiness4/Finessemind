@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finnese Mind - Mind Reading Experience</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Fingerprint-shaped canvas */
+        #fingerprintCanvas {
+            background-color: #1f2937;
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #fingerprintCanvas:hover {
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Fingerprint ridges */
+        .fingerprint-ridge {
+            position: absolute;
+            background: #4b5563;
+            border-radius: 50%;
+        }
+        
+        .feeling-bubble {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            animation: float 4s ease-in-out infinite;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.6s ease;
+            z-index: 10;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+        
+        .feeling-bubble:hover {
+            transform: scale(1.2) rotateY(20deg);
+            box-shadow: 0 20px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .feeling-bubble.primary {
+            animation: pulse 2s infinite, float 4s ease-in-out infinite;
+            transform: scale(1.3) rotateY(0deg);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+            z-index: 20;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .hand-outline {
+            position: absolute;
+            opacity: 0.1;
+            pointer-events: none;
+        }
+
+        .scan-line {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(to right, 
+                transparent, 
+                rgba(99, 102, 241, 0.2),
+                rgba(99, 102, 241, 0.8),
+                rgba(99, 102, 241, 0.2),
+                transparent);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.8);
+            z-index: 5;
+            transform: translateY(-100%);
+            animation: scan 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            opacity: 0;
+        }
+
+        @keyframes scan {
+            0% { 
+                transform: translateY(0); 
+                opacity: 0;
+            }
+            20% {
+                opacity: 1;
+            }
+            80% {
+                opacity: 1;
+            }
+            100% { 
+                transform: translateY(-400px); 
+                opacity: 0;
+            }
+        }
+
+        .scan-pulse {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+            animation: pulse-scan 3s ease-out infinite;
+            z-index: 4;
+        }
+
+        @keyframes pulse-scan {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { opacity: 0.5; }
+            100% { transform: scale(1.2); opacity: 0; }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-12">
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <h1 class="text-5xl font-bold text-indigo-200 mb-4">Finnese Mind</h1>
+            <p class="text-xl text-indigo-300 max-w-2xl mx-auto">
+                Discover your subconscious feelings through the power of touch
+            </p>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="flex flex-col lg:flex-row items-center justify-center gap-12">
+            <!-- Instructions Panel -->
+            <div class="bg-gray-800 p-8 rounded-2xl shadow-xl max-w-md w-full lg:w-auto border border-gray-700">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="bg-indigo-900 p-3 rounded-full">
+                        <i class="fas fa-hand-holding-heart text-indigo-300 text-2xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-100">How It Works</h2>
+                </div>
+                
+                <ol class="space-y-4">
+                    <li class="flex items-start gap-3">
+                        <span class="bg-indigo-900 text-indigo-200 font-bold rounded-full h-8 w-8 flex items-center justify-center flex-shrink-0">1</span>
+                        <p class="text-gray-300">Place both hands on the fingerprint canvas below</p>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="bg-indigo-900 text-indigo-200 font-bold rounded-full h-8 w-8 flex items-center justify-center flex-shrink-0">2</span>
+                        <p class="text-gray-300">Close your eyes and focus on your current emotions</p>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="bg-indigo-900 text-indigo-200 font-bold rounded-full h-8 w-8 flex items-center justify-center flex-shrink-0">3</span>
+                        <p class="text-gray-300">Your subconscious feelings will emerge as bubbles</p>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="bg-indigo-900 text-indigo-200 font-bold rounded-full h-8 w-8 flex items-center justify-center flex-shrink-0">4</span>
+                        <p class="text-gray-300">Click on bubbles to explore your emotional state</p>
+                    </li>
+                </ol>
+                
+                <div class="mt-8 bg-indigo-900/30 p-4 rounded-lg border border-indigo-800">
+                    <div class="flex gap-3">
+                        <i class="fas fa-lightbulb text-yellow-400 mt-1"></i>
+                        <p class="text-indigo-200">
+                            <span class="font-semibold">Pro Tip:</span> The longer you keep your hands on the canvas, the more accurate the reading becomes.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Fingerprint Canvas -->
+            <div class="relative">
+                <canvas id="fingerprintCanvas" width="400" height="500" class="w-full max-w-full border-4 border-indigo-800 pulse"></canvas>
+                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBkPSJNMjU2IDhDMTE5IDggOCAxMTkgOCAyNTZzMTExIDI0OCAyNDggMjQ4IDI0OC0xMTEgMjQ4LTI0OFMzOTMgOCAyNTYgOHptMCA0NDhjLTExMC41IDAtMjAwLTg5LjUtMjAwLTIwMFMxNDUuNSA1NiAyNTYgNTZzMjAwIDg5LjUgMjAwIDIwMC04OS41IDIwMC0yMDAgMjAwem0wLTM0NGMtNDQuMiAwLTgwIDM1LjgtODAgODBzMzUuOCA4MCA4MCA4MCA4MC0zNS44IDgwLTgwLTM1LjgtODAtODAtODB6IiBmaWxsPSIjRkZGIiBmaWxsLW9wYWNpdHk9IjAuMSIvPjwvc3ZnPg==" alt="Hand outline" class="hand-outline w-3/4 left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                
+                <div class="absolute top-0 left-0 w-full flex justify-center">
+                    <h3 id="instructionText" class="text-indigo-100 text-lg font-bold bg-gray-800/90 px-6 py-3 rounded-lg shadow-lg">
+                        Place Both Hands on the Fingerprint
+                    </h3>
+                </div>
+            </div>
+            
+            <!-- Results Panel (initially hidden) -->
+            <div id="resultsPanel" class="bg-gray-800 p-8 rounded-2xl shadow-xl max-w-md w-full lg:w-auto hidden border border-gray-700">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="bg-purple-900 p-3 rounded-full">
+                        <i class="fas fa-brain text-purple-300 text-2xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-100">Your Emotional Profile</h2>
+                </div>
+                
+                <div id="primaryFeeling" class="mb-6 p-4 bg-purple-900/30 rounded-lg border border-purple-800">
+                    <h3 class="font-semibold text-purple-200 mb-2">Primary Feeling</h3>
+                    <p id="primaryFeelingText" class="text-2xl font-bold text-purple-100">-</p>
+                </div>
+                
+                <div id="secondaryFeelings" class="mb-6">
+                    <h3 class="font-semibold text-gray-300 mb-3">Secondary Feelings</h3>
+                    <div id="secondaryFeelingsList" class="flex flex-wrap gap-2">
+                        <!-- Feelings will be added here dynamically -->
+                    </div>
+                </div>
+                
+                <div class="bg-purple-900/30 p-4 rounded-lg border border-purple-800">
+                    <h3 class="font-semibold text-purple-200 mb-2">Analysis</h3>
+                    <p id="analysisText" class="text-gray-300">Your reading will appear here after you complete the session.</p>
+                </div>
+                
+                <button id="resetBtn" class="mt-6 w-full bg-indigo-700 hover:bg-indigo-600 text-white font-medium py-3 px-4 rounded-lg transition duration-300">
+                    Start New Reading
+                </button>
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="mt-16 text-center text-gray-400">
+            <p>Finnese Mind &copy; 2025 - Exploring the subconscious through touch</p>
+
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('fingerprintCanvas');
+            const ctx = canvas.getContext('2d');
+            const instructionText = document.getElementById('instructionText');
+            const resultsPanel = document.getElementById('resultsPanel');
+            const primaryFeelingText = document.getElementById('primaryFeelingText');
+            const secondaryFeelingsList = document.getElementById('secondaryFeelingsList');
+            const analysisText = document.getElementById('analysisText');
+            const resetBtn = document.getElementById('resetBtn');
+            
+            // Common human feelings
+            const feelings = [
+                "Joy", "Sadness", "Anger", "Fear", "Surprise", 
+                "Love", "Disgust", "Shame", "Guilt", "Pride",
+                "Hope", "Despair", "Contentment", "Boredom", "Excitement",
+                "Gratitude", "Loneliness", "Confusion", "Curiosity", "Awe",
+                "Peace", "Anxiety", "Envy", "Jealousy", "Empathy",
+                "Frustration", "Relief", "Anticipation", "Nostalgia", "Regret"
+            ];
+            
+            // Analysis phrases
+            const analysisPhrases = [
+                "Your emotional landscape shows a mix of feelings, suggesting you're processing multiple aspects of your life.",
+                "The dominance of one particular feeling indicates this emotion is currently at the forefront of your mind.",
+                "Your feelings seem balanced, which might reflect a period of stability in your life.",
+                "The contrast between your primary and secondary feelings suggests inner complexity.",
+                "Your emotional profile indicates you're in a transitional state of mind.",
+                "The presence of both positive and negative feelings shows you're experiencing life in its full spectrum."
+            ];
+            
+            let activeFeelings = [];
+            let touchStartTime = 0;
+            let isReading = false;
+            
+            // Draw realistic fingerprint pattern
+            function drawFingerprint() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw fingerprint background
+                ctx.fillStyle = '#f3f4f6';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw concentric ridges
+                ctx.strokeStyle = '#9ca3af';
+                ctx.lineWidth = 2;
+                
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const maxRadius = Math.min(canvas.width, canvas.height) * 0.45;
+                
+                for (let r = maxRadius; r > 20; r -= 8) {
+                    ctx.beginPath();
+                    
+                    // Add some randomness to make it look organic
+                    const points = [];
+                    for (let angle = 0; angle < Math.PI * 2; angle += 0.1) {
+                        const variance = 3 + Math.sin(angle * 5) * 5;
+                        const radius = r + Math.random() * variance;
+                        const x = centerX + Math.cos(angle) * radius;
+                        const y = centerY + Math.sin(angle) * radius;
+                        
+                        if (angle === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                        
+                        points.push({x, y});
+                    }
+                    
+                    ctx.closePath();
+                    ctx.stroke();
+                    
+                    // Add some ridge details
+                    ctx.strokeStyle = `rgba(156, 163, 175, ${0.3 + Math.random() * 0.3})`;
+                    ctx.lineWidth = 1;
+                    
+                    points.forEach((point, i) => {
+                        if (i % 10 === 0 && Math.random() > 0.7) {
+                            ctx.beginPath();
+                            ctx.moveTo(point.x, point.y);
+                            ctx.lineTo(
+                                point.x + (Math.random() * 6 - 3),
+                                point.y + (Math.random() * 6 - 3)
+                            );
+                            ctx.stroke();
+                        }
+                    });
+                }
+            }
+            
+            // Generate a random feeling bubble
+            function generateFeelingBubble() {
+                if (activeFeelings.length >= 10) return;
+                
+                const availableFeelings = feelings.filter(f => !activeFeelings.includes(f));
+                if (availableFeelings.length === 0) return;
+                
+                const feeling = availableFeelings[Math.floor(Math.random() * availableFeelings.length)];
+                activeFeelings.push(feeling);
+                
+                const bubble = document.createElement('div');
+                bubble.className = 'feeling-bubble';
+                bubble.textContent = feeling;
+                
+                // Random position (avoid edges)
+                const size = Math.floor(Math.random() * 60) + 40;
+                const x = Math.floor(Math.random() * (canvas.width - size - 40)) + 20;
+                const y = Math.floor(Math.random() * (canvas.height - size - 40)) + 20;
+                
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.left = `${x}px`;
+                bubble.style.top = `${y}px`;
+                
+                // Random color with 3D effect
+                const hue = Math.floor(Math.random() * 360);
+                bubble.style.backgroundColor = `hsla(${hue}, 80%, 75%, 0.9)`;
+                bubble.style.color = `hsl(${hue}, 60%, 20%)`;
+                bubble.style.border = `2px solid hsl(${hue}, 60%, 40%)`;
+                bubble.style.boxShadow = `inset 0 0 20px hsla(${hue}, 80%, 90%, 0.8),
+                                         0 5px 15px rgba(0,0,0,0.2)`;
+                
+                // Random animation delay
+                bubble.style.animationDelay = `${Math.random() * 2}s`;
+                
+                // Click handler
+                bubble.addEventListener('click', function() {
+                    if (bubble.classList.contains('primary')) return;
+                    
+                    // Make this the primary feeling
+                    document.querySelectorAll('.feeling-bubble.primary').forEach(el => {
+                        el.classList.remove('primary');
+                        el.style.transform = 'scale(1)';
+                    });
+                    
+                    bubble.classList.add('primary');
+                    bubble.style.transform = 'scale(1.3)';
+                    bubble.style.zIndex = '20';
+                    
+                    primaryFeelingText.textContent = feeling;
+                    updateAnalysis();
+                });
+                
+                // Add to canvas container
+                canvas.parentNode.appendChild(bubble);
+                
+                return bubble;
+            }
+            
+            // Update the analysis text
+            function updateAnalysis() {
+                const primary = primaryFeelingText.textContent;
+                const secondaries = activeFeelings.filter(f => f !== primary);
+                
+                // Update secondary feelings list
+                secondaryFeelingsList.innerHTML = '';
+                secondaries.forEach(feeling => {
+                    const chip = document.createElement('div');
+                    chip.className = 'bg-indigo-900 text-indigo-200 px-3 py-1 rounded-full';
+                    chip.textContent = feeling;
+                    secondaryFeelingsList.appendChild(chip);
+                });
+                
+                // Set analysis text
+                analysisText.textContent = analysisPhrases[Math.floor(Math.random() * analysisPhrases.length)];
+            }
+            
+            // Start the mind reading session
+            function startReading() {
+                if (isReading) return;
+                isReading = true;
+                
+                instructionText.textContent = "Keep hands on fingerprint - Focus on your feelings...";
+                canvas.classList.remove('pulse');
+                
+                // Add scanning effects
+                const scanLine = document.createElement('div');
+                scanLine.className = 'scan-line';
+                
+                const scanPulse = document.createElement('div');
+                scanPulse.className = 'scan-pulse';
+                
+                canvas.parentNode.appendChild(scanLine);
+                canvas.parentNode.appendChild(scanPulse);
+                
+                // Randomize scan line timing
+                scanLine.style.animationDelay = `${Math.random() * 0.5}s`;
+                
+                // Generate initial feelings
+                const initialCount = Math.floor(Math.random() * 3) + 2;
+                for (let i = 0; i < initialCount; i++) {
+                    generateFeelingBubble();
+                }
+                
+                // Continue generating feelings periodically (slower pace)
+                const interval = setInterval(() => {
+                    if (activeFeelings.length < 8 && Math.random() > 0.3) {
+                        generateFeelingBubble();
+                    }
+                    
+                    // Alternate instruction text to remind user
+                    instructionText.textContent = Math.random() > 0.7 
+                        ? "Keep hands on fingerprint - Scanning in progress..." 
+                        : "Keep hands on fingerprint - Focus on your feelings...";
+                    
+                    // Randomly make one feeling primary if none is selected
+                    if (!primaryFeelingText.textContent || primaryFeelingText.textContent === '-') {
+                        const bubbles = document.querySelectorAll('.feeling-bubble:not(.primary)');
+                        if (bubbles.length > 0 && Math.random() > 0.7) {
+                            bubbles[Math.floor(Math.random() * bubbles.length)].click();
+                        }
+                    }
+                }, 4000);
+                
+                // Show results after 16-20 seconds (longer session)
+                setTimeout(() => {
+                    clearInterval(interval);
+                    showResults();
+                }, 16000 + Math.random() * 4000);
+            }
+            
+            // Show the results panel
+            function showResults() {
+                // Stop scan animations
+                document.querySelectorAll('.scan-line, .scan-pulse').forEach(el => {
+                    el.style.animation = 'none';
+                });
+                // If no primary feeling was selected, choose one randomly
+                if (!primaryFeelingText.textContent || primaryFeelingText.textContent === '-') {
+                    const bubbles = document.querySelectorAll('.feeling-bubble');
+                    if (bubbles.length > 0) {
+                        bubbles[Math.floor(Math.random() * bubbles.length)].click();
+                    } else {
+                        primaryFeelingText.textContent = "Neutral";
+                    }
+                }
+                
+                updateAnalysis();
+                resultsPanel.classList.remove('hidden');
+                instructionText.textContent = "Reading complete";
+            }
+            
+            // Reset everything
+            function reset() {
+                // Remove all feeling bubbles and scan line
+                document.querySelectorAll('.feeling-bubble, .scan-line, .scan-pulse').forEach(el => el.remove());
+                
+                // Reset variables
+                activeFeelings = [];
+                isReading = false;
+                touchStartTime = 0;
+                
+                // Reset UI
+                resultsPanel.classList.add('hidden');
+                primaryFeelingText.textContent = '-';
+                secondaryFeelingsList.innerHTML = '';
+                analysisText.textContent = 'Your reading will appear here after you complete the session.';
+                instructionText.textContent = "Place your hands here to begin";
+                canvas.classList.add('pulse');
+                
+                // Redraw fingerprint
+                drawFingerprint();
+            }
+            
+            // Canvas click/touch handler
+            canvas.addEventListener('click', function() {
+                if (!isReading) {
+                    startReading();
+                }
+            });
+            
+            // Touch start handler for mobile
+            canvas.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                if (!isReading) {
+                    touchStartTime = Date.now();
+                    startReading();
+                }
+            });
+            
+            // Reset button
+            resetBtn.addEventListener('click', reset);
+            
+            // Initialize
+            drawFingerprint();
+            
+            // Make canvas responsive
+            function resizeCanvas() {
+                const container = canvas.parentNode;
+                const containerWidth = container.offsetWidth;
+                
+                // Maintain aspect ratio
+                const aspectRatio = canvas.width / canvas.height;
+                canvas.style.width = `${containerWidth}px`;
+                canvas.style.height = `${containerWidth / aspectRatio}px`;
+            }
+            
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+        });
+    </script>
+</body>
+</html>
